@@ -47,5 +47,6 @@ Temporary Items
 .apdisk
 Hearts/build/
 Hearts/target/
+Hearts/nbproject/
 Hearts/build.xml
 Hearts/manifest.mf
