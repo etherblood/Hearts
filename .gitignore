@@ -45,8 +45,9 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
-Hearts/build/
-Hearts/target/
-Hearts/nbproject/
-Hearts/build.xml
-Hearts/manifest.mf
+**/build/
+**/target/
+**/nbproject/
+build.xml
+manifest.mf
+**/dist/

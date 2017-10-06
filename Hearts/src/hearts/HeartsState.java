@@ -6,75 +6,94 @@ package hearts;
  */
 public class HeartsState {
 
-    final long[] handCards;
-    final long[] wonCards;
-    final int[] moveStack;
-    int startPlayer, movesPlayed;
+    public final long[] handCards;
+    public final long[] scoreCards;
+    public final IntList moveStack;
+    public int startPlayer;
 
     public HeartsState(int numPlayers) {
         this.handCards = new long[numPlayers];
-        this.wonCards = new long[numPlayers];
-        this.moveStack = new int[numPlayers];
+        this.scoreCards = new long[numPlayers];
+        this.moveStack = new IntList(numPlayers);
     }
 
     public boolean isGameOver() {
         return handCards[offsetPlayer(startPlayer, -1)] == 0;
     }
 
-    public int numPlayers() {
-        return moveStack.length;
+    public int playerCount() {
+        return handCards.length;
     }
 
-    public int getCurrentPlayer() {
-        return offsetPlayer(startPlayer, movesPlayed);
+    public int activePlayer() {
+        return offsetPlayer(startPlayer, moveStack.size());
     }
 
-    public long getHandCardFlags(int player) {
+    public long handCardsOf(int player) {
         return handCards[player];
     }
 
-    public long getWonCardFlags(int player) {
-        return wonCards[player];
+    public long scoreCardsOf(int player) {
+        return scoreCards[player];
+    }
+    
+    public boolean isLegalPlay(int card) {
+        return isLegalPlay(1L << card);
+    }
+    
+    private boolean isLegalPlay(long cardFlag) {
+        return (availableMoves() & cardFlag) != 0;
     }
 
     public void playCard(int card) {
         long cardFlag = 1L << card;
-        assert (availableMovesFlags() & cardFlag) != 0;
-        int currentPlayer = getCurrentPlayer();
-        moveStack[movesPlayed] = card;
+        assert isLegalPlay(cardFlag);
+        int currentPlayer = activePlayer();
+        moveStack.push(card);
         handCards[currentPlayer] ^= cardFlag;
-        movesPlayed++;
-        if (movesPlayed == numPlayers()) {
+        if (moveStack.size() == playerCount()) {
             endRound();
         }
     }
 
     private void endRound() {
-        int color = Cards.color(moveStack[0]);
+        long cardFlags = 0;
+        for (int i = 0; i < playerCount(); i++) {
+            cardFlags |= 1L << moveStack.get(i);
+        }
+        int winningPlayer = offsetPlayer(startPlayer, winIndex(moveStack));
+        scoreCards[winningPlayer] |= cardFlags;
+        startPlayer = winningPlayer;
+        moveStack.clear();
+    }
+    
+    public static int winIndex(IntList moveStack) {
+        assert moveStack.size() == moveStack.capacity();
+        int color = Cards.color(moveStack.get(0));
         int bestIndex = 0;
-        int bestValue = moveStack[0];
-        long cardFlags = 1L << bestValue;
-        for (int i = 1; i < moveStack.length; i++) {
-            int cardValue = moveStack[i];
+        int bestValue = moveStack.get(0);
+        for (int i = 1; i < moveStack.size(); i++) {
+            int cardValue = moveStack.get(i);
             if (Cards.color(cardValue) == color && cardValue > bestValue) {
                 bestIndex = i;
                 bestValue = cardValue;
             }
-            cardFlags |= 1L << cardValue;
         }
-        int winningPlayer = offsetPlayer(startPlayer, bestIndex);
-        wonCards[winningPlayer] |= cardFlags;
-        startPlayer = winningPlayer;
-        movesPlayed = 0;
+        return bestIndex;
+    }
+
+    public int activeColor() {
+        assert moveStack.size() != 0;
+        return Cards.color(moveStack.get(0));
     }
 
     private int offsetPlayer(int player, int offset) {
-        return Math.floorMod(player + offset, numPlayers());
+        return Math.floorMod(player + offset, playerCount());
     }
 
-    public long availableMovesFlags() {
-        long currentHandCards = getHandCardFlags(getCurrentPlayer());
-        if (movesPlayed == 0) {
+    public long availableMoves() {
+        long currentHandCards = handCardsOf(activePlayer());
+        if (moveStack.size() == 0) {
             long allWonCards = allWonCards();
             if(allWonCards == 0) {
                 return Long.lowestOneBit(currentHandCards & Cards.allOfColor(Cards.CLUBS));
@@ -88,7 +107,7 @@ public class HeartsState {
             }
             return currentHandCards;
         }
-        long moves = Cards.allOfColor(Cards.color(moveStack[0])) & currentHandCards;
+        long moves = Cards.allOfColor(activeColor()) & currentHandCards;
         if (moves != 0) {
             return moves;
         }
@@ -96,10 +115,10 @@ public class HeartsState {
     }
     
     private long allWonCards() {
-        return allCards(wonCards);
+        return allCards(scoreCards);
     }
     
-    long allHandCards() {
+    public long allHandCards() {
         return allCards(handCards);
     }
     
@@ -109,5 +128,16 @@ public class HeartsState {
             result |= card;
         }
         return result;
+    }
+    
+    public void copyFrom(HeartsState state) {
+        if(playerCount() != state.playerCount()) {
+            throw new UnsupportedOperationException("can only copy from state with same amount of players");
+        }
+        assert this != state;
+        System.arraycopy(state.handCards, 0, handCards, 0, handCards.length);
+        System.arraycopy(state.scoreCards, 0, scoreCards, 0, scoreCards.length);
+        moveStack.copyFrom(state.moveStack);
+        startPlayer = state.startPlayer;
     }
 }

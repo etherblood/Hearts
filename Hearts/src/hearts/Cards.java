@@ -27,6 +27,8 @@ public class Cards {
     public final static int KING = 13;
     public final static int ACE = 14;
 
+    public final static long ALL_CARDS;
+
     private static final long ALL_VALUES_FLAGS;
 
     static {
@@ -47,6 +49,7 @@ public class Cards {
                 | (1L << QUEEN)
                 | (1L << KING)
                 | (1L << ACE);
+        ALL_CARDS = allOfColor(HEARTS) | allOfColor(CLUBS) | allOfColor(DIAMONDS) | allOfColor(SPADES);
     }
 
     public static long allOfColor(int color) {
@@ -66,13 +69,9 @@ public class Cards {
     }
 
     public static int cardsScore(long cardFlags) {
-        int score = 0;
-        while (cardFlags != 0) {
-            int card = Long.numberOfTrailingZeros(cardFlags);
-            score += cardScore(card);
-            cardFlags ^= 1L << card;
-        }
-        return score;
+        int hearts = Long.bitCount(cardFlags & allOfColor(HEARTS));
+        int spadeQueen = (int) (cardFlags >>> card(SPADES, QUEEN)) & 1;
+        return hearts + 13 * spadeQueen;
     }
 
     public static int cardScore(int card) {

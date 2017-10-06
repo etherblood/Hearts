@@ -1,5 +1,7 @@
 package hearts;
 
+import java.util.Arrays;
+
 /**
  *
  * @author Philipp
@@ -33,52 +35,61 @@ public class HeartsStatePrinter {
         VALUE_NAMES[Cards.KING] = "King";
         VALUE_NAMES[Cards.ACE] = "Ace";
     }
-    
-    public String toString(HeartsState state) {
+
+    public String playerStateString(HeartsState state, int player) {
         StringBuilder builder = new StringBuilder();
-        toString(builder, state);
+        toString(builder, state, player);
         return builder.toString();
     }
 
-    private void toString(StringBuilder builder, HeartsState state) {
-        builder.append("stack:");
-        builder.append(System.lineSeparator());
-        for (int i = 0; i < state.movesPlayed; i++) {
-            if (i != 0) {
-                builder.append(", ");
-            }
-            toString(builder, state.moveStack[i]);
+    public String stateString(HeartsState state) {
+        StringBuilder builder = new StringBuilder();
+        int[] players = new int[state.playerCount()];
+        for (int i = 0; i < players.length; i++) {
+            players[i] = i;
         }
+        toString(builder, state, players);
+        return builder.toString();
+    }
+
+    private void toString(StringBuilder builder, HeartsState state, int... players) {
+        builder.append("stack: ");
+        toString(builder, state.moveStack, ", ");
         builder.append(System.lineSeparator());
 
-        builder.append("hands:");
+        builder.append("current player: ");
+        builder.append(state.activePlayer());
         builder.append(System.lineSeparator());
-        for (int player = 0; player < state.numPlayers(); player++) {
+
+        if (Arrays.binarySearch(players, state.activePlayer()) >= 0) {
+            builder.append("available moves: ");
+            toString(builder, state.availableMoves(), ", ");
+            builder.append(System.lineSeparator());
+        }
+
+        builder.append("hand:");
+        builder.append(System.lineSeparator());
+        for (int player : players) {
+            builder.append(player);
+            builder.append(": ");
             toString(builder, state.handCards[player], ", ");
             builder.append(System.lineSeparator());
         }
-        builder.append(System.lineSeparator());
 
-        builder.append("won:");
+        builder.append("score:");
         builder.append(System.lineSeparator());
-        for (int player = 0; player < state.numPlayers(); player++) {
-            toString(builder, state.wonCards[player], ", ");
+        for (int player : players) {
+            builder.append(player);
+            builder.append(": ");
+            toString(builder, state.scoreCards[player], ", ");
             builder.append(System.lineSeparator());
         }
-        builder.append(System.lineSeparator());
-        
-        builder.append("current player: ");
-        builder.append(state.getCurrentPlayer());
-        builder.append(System.lineSeparator());
-        
-        builder.append("available moves:");
-        builder.append(System.lineSeparator());
-        toString(builder, state.availableMovesFlags(), ", ");
     }
 
-    private void toString(StringBuilder builder, int[] cards, String delimiter) {
+    private void toString(StringBuilder builder, IntList cards, String delimiter) {
         boolean first = true;
-        for (int card : cards) {
+        for (int i = 0; i < cards.size(); i++) {
+            int card = cards.get(i);
             if (first) {
                 first = false;
             } else {
@@ -86,6 +97,12 @@ public class HeartsStatePrinter {
             }
             toString(builder, card);
         }
+    }
+
+    public String cardsString(long cardFlags, String delimiter) {
+        StringBuilder builder = new StringBuilder();
+        toString(builder, cardFlags, delimiter);
+        return builder.toString();
     }
 
     private void toString(StringBuilder builder, long cardFlags, String delimiter) {
@@ -101,8 +118,8 @@ public class HeartsStatePrinter {
             cardFlags ^= 1L << card;
         }
     }
-    
-    public String toString(int card) {
+
+    public String cardString(int card) {
         StringBuilder builder = new StringBuilder();
         toString(builder, card);
         return builder.toString();
