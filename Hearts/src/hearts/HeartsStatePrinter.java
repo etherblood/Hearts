@@ -30,10 +30,10 @@ public class HeartsStatePrinter {
 //        VALUE_NAMES[Cards.EIGHT] = "Eight";
 //        VALUE_NAMES[Cards.NINE] = "Nine";
 //        VALUE_NAMES[Cards.TEN] = "Ten";
-        VALUE_NAMES[Cards.JACK] = "Jack";
-        VALUE_NAMES[Cards.QUEEN] = "Queen";
-        VALUE_NAMES[Cards.KING] = "King";
-        VALUE_NAMES[Cards.ACE] = "Ace";
+        VALUE_NAMES[Cards.JACK] = "J";
+        VALUE_NAMES[Cards.QUEEN] = "Q";
+        VALUE_NAMES[Cards.KING] = "K";
+        VALUE_NAMES[Cards.ACE] = "A";
     }
 
     public String playerStateString(HeartsState state, int player) {
